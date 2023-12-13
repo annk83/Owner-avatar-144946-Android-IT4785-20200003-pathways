@@ -59,6 +59,7 @@ class GameFragment : Fragment() {
         savedInstantState: Bundle?
     ) : View {
         val bindding = GameFragmentBinding.inflate(inflater, container, false)
+        binding = bindding
         Log.d("GameFragment", "GameFragment create / recreate")
         return bindding.root;
     }
@@ -154,5 +155,7 @@ class GameFragment : Fragment() {
      */
     private fun updateNextWordOnScreen() {
         binding.textViewUnscrambledWord.text = gameViewModel.currentScrambledWord
+        binding.wordCount.text = gameViewModel.currentWordCount.toString()
+        binding.score.text = gameViewModel.score.toString()
     }
 }
