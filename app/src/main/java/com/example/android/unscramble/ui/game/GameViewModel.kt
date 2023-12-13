@@ -1,13 +1,19 @@
 package com.example.android.unscramble.ui.game
 
+import android.text.Spannable
+import android.text.SpannableString
+import android.text.style.TtsSpan
 import android.util.Log
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Transformations
 import androidx.lifecycle.ViewModel
 import java.util.ArrayList
 
 class GameViewModel : ViewModel() {
-    private var _score = 0
-    private var _currentWordCount = 0
-    private lateinit var _currentScrambledWord : String
+    private var _score = MutableLiveData(0)
+    private var _currentWordCount = MutableLiveData(0)
+    private val _currentScrambledWord = MutableLiveData("")
     private lateinit var _currentWord : String
     private val rand = java.util.Random()
     private val words = ArrayList<String>()
@@ -24,10 +30,11 @@ class GameViewModel : ViewModel() {
     }
 
     private fun increaseScore() {
-        _score += SCORE_INCREASE
+        _score.value = _score.value!! + SCORE_INCREASE
     }
 
     fun isUserWordCorrnect(w : String) : Boolean {
+        Log.i(null, "$w $_currentWord")
         if(w.equals(_currentWord, true)) {
             increaseScore()
             return true;
@@ -35,13 +42,12 @@ class GameViewModel : ViewModel() {
         return false
     }
 
-    val score : Int get() = _score
-    val currentWordCount : Int get() = _currentWordCount
-    val currentScrambledWord : String get() = _currentScrambledWord
+    val score : LiveData<Int> get() = _score
+    val currentWordCount : LiveData<Int> get() = _currentWordCount
 
     fun reinit() {
-        _score = 0
-        _currentWordCount = 0
+        _score.value = 0
+        _currentWordCount.value = 0
         words.clear()
         words.addAll(allWordsList)
     }
@@ -58,17 +64,34 @@ class GameViewModel : ViewModel() {
             }
             val vv = sb.toString()
             if(vv == str) continue
-            _currentScrambledWord = sb.toString()
+            _currentScrambledWord.value = sb.toString()
             _currentWord = str
             break
         }
-        ++_currentWordCount
+        _currentWordCount.value = _currentWordCount.value!! + 1
     }
 
     fun nextWord():Boolean {
-        return if(currentWordCount < MAX_NO_OF_WORDS) {
+        return if(currentWordCount.value!! < MAX_NO_OF_WORDS) {
             getNextWord()
             true
         } else false
     }
+
+    val currentScrambledWord: LiveData<Spannable> = Transformations.map(_currentScrambledWord) {
+        if (it == null) {
+            SpannableString("")
+        } else {
+            val scrambledWord = it.toString()
+            val spannable: Spannable = SpannableString(scrambledWord)
+            spannable.setSpan(
+                TtsSpan.VerbatimBuilder(scrambledWord).build(),
+                0,
+                scrambledWord.length,
+                Spannable.SPAN_INCLUSIVE_INCLUSIVE
+            )
+            spannable
+        }
+    }
+
 }
